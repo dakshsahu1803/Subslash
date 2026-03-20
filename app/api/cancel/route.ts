@@ -14,14 +14,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const genAI = getAIClient();
-    const model = genAI.getGenerativeModel({
+    const groq = getAIClient();
+    const completion = await groq.chat.completions.create({
       model: MODEL,
-      systemInstruction: SYSTEM_PROMPT,
-    });
-
-    const result = await model.generateContent(
-      `Write a firm but professional cancellation email for the subscription service: ${service_name}.
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: `Write a firm but professional cancellation email for the subscription service: ${service_name}.
 The user has been charged ₹${amount || 'unknown'} ${billing_cycle || 'monthly'}.
 The email should:
 - Be direct and firm, not apologetic
@@ -29,10 +29,15 @@ The email should:
 - Ask for refund of current billing period if applicable
 - Be under 150 words
 - Have a clear subject line
-Return as JSON: { "subject": string, "body": string }`
-    );
+Return as JSON: { "subject": string, "body": string }`,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 1024,
+      response_format: { type: 'json_object' },
+    });
 
-    const responseText = result.response.text();
+    const responseText = completion.choices[0]?.message?.content;
 
     if (!responseText) {
       return NextResponse.json(
@@ -62,7 +67,7 @@ Return as JSON: { "subject": string, "body": string }`
 
     if (err instanceof Error) {
       return NextResponse.json(
-        { error: err.message, code: 'gemini_api_error' },
+        { error: err.message, code: 'groq_api_error' },
         { status: 502 }
       );
     }
