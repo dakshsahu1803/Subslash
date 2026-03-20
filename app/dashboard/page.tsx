@@ -12,7 +12,8 @@ import {
   ArrowRight,
   Clock,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import SubscriptionCard from "@/components/SubscriptionCard";
 import BurnRateChart from "@/components/BurnRateChart";
 import SavingsAdvisor from "@/components/SavingsAdvisor";
@@ -502,13 +503,16 @@ function StatCard({
 
 export default function DashboardPage() {
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-white">
-      <Navbar />
-      <div className="mx-auto max-w-6xl px-4 pb-20 pt-24 sm:px-6">
-        <Suspense fallback={<DashboardSkeleton />}>
-          <DashboardContent />
-        </Suspense>
-      </div>
-    </main>
+    <>
+      <main className="min-h-screen bg-[#080808] text-white">
+        <Navbar />
+        <div className="mx-auto max-w-6xl px-4 pb-20 pt-24 sm:px-6">
+          <Suspense fallback={<DashboardSkeleton />}>
+            <DashboardContent />
+          </Suspense>
+        </div>
+      </main>
+      <Footer />
+    </>
   );
 }

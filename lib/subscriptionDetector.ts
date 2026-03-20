@@ -101,17 +101,30 @@ export function detectSubscriptions(
       ? capitalize(group.matchedService.name)
       : capitalize(group.description);
 
+    const amount = Math.round(avgAmount * 100) / 100;
+    const lastCharged = group.dates[group.dates.length - 1];
+    const nextRenewal = calculateNextRenewal(lastCharged, cycle);
+
     subscriptions.push({
       service_name: serviceName,
-      amount: Math.round(avgAmount * 100) / 100,
+      amount,
       currency: 'INR',
       billing_cycle: cycle,
-      last_charged: group.dates[group.dates.length - 1],
+      last_charged: lastCharged,
       times_charged: group.amounts.length,
       category: group.matchedService?.category ?? 'other',
       is_forgotten: isForgotten,
       logo_url: group.matchedService?.logo_url ?? null,
       cancel_url: group.matchedService?.cancel_url ?? null,
+      is_cancelled: false,
+      next_renewal: nextRenewal.toISOString().split('T')[0],
+      price_increased: false,
+      original_amount: amount,
+      is_manually_added: false,
+      notes: null,
+      lifetime_spent: amount * group.amounts.length,
+      session_id: '',
+      confidence: 'medium' as const,
     });
   }
 
@@ -134,6 +147,92 @@ function capitalize(s: string): string {
     .split(' ')
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
+}
+
+// Calculate the next renewal date from a last charge date and billing cycle
+export function calculateNextRenewal(lastCharged: string | null, billingCycle: string): Date {
+  const base = lastCharged ? new Date(lastCharged) : new Date();
+  const next = new Date(base);
+
+  switch (billingCycle) {
+    case 'weekly':
+      next.setDate(next.getDate() + 7);
+      break;
+    case 'yearly':
+      next.setFullYear(next.getFullYear() + 1);
+      break;
+    case 'monthly':
+    default:
+      next.setMonth(next.getMonth() + 1);
+      break;
+  }
+
+  // If calculated next renewal is in the past, roll forward until it's in the future
+  const now = new Date();
+  while (next < now) {
+    switch (billingCycle) {
+      case 'weekly':
+        next.setDate(next.getDate() + 7);
+        break;
+      case 'yearly':
+        next.setFullYear(next.getFullYear() + 1);
+        break;
+      case 'monthly':
+      default:
+        next.setMonth(next.getMonth() + 1);
+        break;
+    }
+  }
+
+  return next;
+}
+
+// Generate all past charge dates for a subscription over the last 365 days
+export function generateChargeHistory(subscription: {
+  last_charged: string | null;
+  billing_cycle: string;
+  amount: number;
+  service_name: string;
+  category: string;
+}): Array<{ date: Date; service_name: string; amount: number; category: string }> {
+  const charges: Array<{ date: Date; service_name: string; amount: number; category: string }> = [];
+  const now = new Date();
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+  if (!subscription.last_charged) return charges;
+
+  const lastCharged = new Date(subscription.last_charged);
+  let intervalDays: number;
+
+  switch (subscription.billing_cycle) {
+    case 'weekly':
+      intervalDays = 7;
+      break;
+    case 'yearly':
+      intervalDays = 365;
+      break;
+    case 'monthly':
+    default:
+      intervalDays = 30;
+      break;
+  }
+
+  // Walk backwards from last_charged to generate past charge dates
+  const cursor = new Date(lastCharged);
+  while (cursor >= oneYearAgo) {
+    if (cursor <= now) {
+      charges.push({
+        date: new Date(cursor),
+        service_name: subscription.service_name,
+        amount: subscription.amount,
+        category: subscription.category,
+      });
+    }
+    cursor.setDate(cursor.getDate() - intervalDays);
+  }
+
+  return charges;
 }
 
 function guessBillingCycle(dates: string[]): 'monthly' | 'yearly' | 'weekly' {
