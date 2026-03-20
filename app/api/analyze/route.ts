@@ -98,21 +98,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const truncatedText = raw_text.length > 100_000
-      ? raw_text.substring(0, 100_000) + '\n\n[... statement truncated ...]'
+    const truncatedText = raw_text.length > 30_000
+      ? raw_text.substring(0, 30_000) + '\n\n[... statement truncated ...]'
       : raw_text;
 
-    const genAI = getAIClient();
-    const model = genAI.getGenerativeModel({
+    const groq = getAIClient();
+    const completion = await groq.chat.completions.create({
       model: MODEL,
-      systemInstruction: SYSTEM_PROMPT,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `Here is the bank statement text to analyze:\n\n${truncatedText}` },
+      ],
+      temperature: 0.1,
+      max_tokens: 4096,
+      response_format: { type: 'json_object' },
     });
 
-    const result = await model.generateContent(
-      `Here is the bank statement text to analyze:\n\n${truncatedText}`
-    );
-
-    const responseText = result.response.text();
+    const responseText = completion.choices[0]?.message?.content;
 
     if (!responseText) {
       return NextResponse.json(
@@ -201,7 +203,7 @@ export async function POST(request: NextRequest) {
 
     if (err instanceof Error) {
       return NextResponse.json(
-        { error: err.message, code: 'gemini_api_error' },
+        { error: err.message, code: 'groq_api_error' },
         { status: 502 }
       );
     }

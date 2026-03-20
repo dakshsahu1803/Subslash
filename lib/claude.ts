@@ -1,17 +1,17 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
-let genAI: GoogleGenerativeAI | null = null;
+let client: Groq | null = null;
 
 export function getAIClient() {
-  if (!process.env.GEMINI_API_KEY) {
-    throw new Error('Missing GEMINI_API_KEY environment variable');
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error('Missing GROQ_API_KEY environment variable');
   }
 
-  if (!genAI) {
-    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  if (!client) {
+    client = new Groq({ apiKey: process.env.GROQ_API_KEY });
   }
 
-  return genAI;
+  return client;
 }
 
-export const MODEL = 'gemini-2.0-flash';
+export const MODEL = 'llama-3.3-70b-versatile';

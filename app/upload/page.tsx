@@ -4,7 +4,8 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, ShieldCheck, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import UploadZone from "@/components/UploadZone";
 
 type UploadStage =
@@ -113,7 +114,8 @@ export default function UploadPage() {
   const isProcessing = stage === "uploading" || stage === "parsing";
 
   return (
-    <main className="relative min-h-screen bg-[#0a0a0a] text-white">
+    <>
+    <main className="relative min-h-screen bg-[#080808] text-white">
       <Navbar />
 
       {/* Background glow */}
@@ -221,5 +223,7 @@ export default function UploadPage() {
         </div>
       </div>
     </main>
+    <Footer />
+    </>
   );
 }
