@@ -23,7 +23,7 @@ const fadeUp = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const },
   },
 };
 
@@ -77,7 +77,7 @@ export default function BudgetPage() {
       ? JSON.parse(saved)
       : DEFAULT_CATEGORIES.map((c) => ({ ...c }));
 
-    const sessionId = localStorage.getItem("session_id");
+    const sessionId = localStorage.getItem("subslash_session_id");
     if (sessionId) {
       try {
         const { data: subs } = await supabase
@@ -310,7 +310,7 @@ export default function BudgetPage() {
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${usagePercent}%` }}
-                transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
+                transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] as const }}
                 className={`h-full rounded-full ${
                   isOverBudget
                     ? "bg-[#ff4444]"
@@ -417,7 +417,7 @@ export default function BudgetPage() {
                       animate={{ width: `${percent}%` }}
                       transition={{
                         duration: 0.8,
-                        ease: [0.25, 0.46, 0.45, 0.94],
+                        ease: [0.25, 0.46, 0.45, 0.94] as const,
                       }}
                       className="h-full rounded-full"
                       style={{

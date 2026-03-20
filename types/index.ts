@@ -200,3 +200,30 @@ export interface ChargeEvent {
   amount: number;
   category: SubscriptionCategory;
 }
+
+// --- Calendar types ---
+
+export interface RenewalEvent {
+  date: string;
+  subscription: Subscription;
+  isPast: boolean;
+  isForgotten: boolean;
+  daysUntil?: number;
+}
+
+export interface DayData {
+  date: string;
+  events: RenewalEvent[];
+  totalAmount: number;
+  hasUrgent: boolean;
+  hasForgotten: boolean;
+}
+
+export interface CalendarSummary {
+  this_month_total: number;
+  next_7_days_total: number;
+  next_7_days_count: number;
+  forgotten_count: number;
+  forgotten_monthly_waste: number;
+  next_renewal: RenewalEvent | null;
+}
