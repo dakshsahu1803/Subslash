@@ -1,4 +1,8 @@
-import type { ParsedTransaction, Subscription, SubscriptionCategory } from '@/types';
+import type { ParsedTransaction, Subscription, SubscriptionCategory, RenewalEvent } from '@/types';
+import {
+  addMonths, subMonths, addYears, subYears, addWeeks, subWeeks,
+  differenceInDays, isBefore,
+} from 'date-fns';
 
 interface KnownService {
   category: SubscriptionCategory;
@@ -233,6 +237,74 @@ export function generateChargeHistory(subscription: {
   }
 
   return charges;
+}
+
+export function generateAllRenewalDates(
+  subscriptions: Subscription[]
+): RenewalEvent[] {
+  const events: RenewalEvent[] = [];
+  const today = new Date();
+  const threeMonthsBack = subMonths(today, 3);
+  const sixMonthsForward = addMonths(today, 6);
+
+  function advance(d: Date, cycle: string): Date {
+    switch (cycle) {
+      case 'weekly': return addWeeks(d, 1);
+      case 'yearly': return addYears(d, 1);
+      default: return addMonths(d, 1);
+    }
+  }
+
+  function retreat(d: Date, cycle: string): Date {
+    switch (cycle) {
+      case 'weekly': return subWeeks(d, 1);
+      case 'yearly': return subYears(d, 1);
+      default: return subMonths(d, 1);
+    }
+  }
+
+  for (const sub of subscriptions) {
+    if (sub.is_cancelled) continue;
+    if (!sub.last_charged) continue;
+
+    const lastCharged = new Date(sub.last_charged);
+
+    // Walk backwards from last_charged to generate past dates
+    let cursor = retreat(lastCharged, sub.billing_cycle);
+    while (isBefore(threeMonthsBack, cursor)) {
+      events.push({
+        date: cursor.toISOString(),
+        subscription: sub,
+        isPast: isBefore(cursor, today),
+        isForgotten: sub.is_forgotten,
+      });
+      cursor = retreat(cursor, sub.billing_cycle);
+    }
+
+    // Add last_charged itself
+    events.push({
+      date: lastCharged.toISOString(),
+      subscription: sub,
+      isPast: isBefore(lastCharged, today),
+      isForgotten: sub.is_forgotten,
+    });
+
+    // Walk forward from last_charged
+    cursor = advance(lastCharged, sub.billing_cycle);
+    while (isBefore(cursor, sixMonthsForward)) {
+      const days = differenceInDays(cursor, today);
+      events.push({
+        date: cursor.toISOString(),
+        subscription: sub,
+        isPast: isBefore(cursor, today),
+        isForgotten: sub.is_forgotten,
+        daysUntil: days > 0 ? days : undefined,
+      });
+      cursor = advance(cursor, sub.billing_cycle);
+    }
+  }
+
+  return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 function guessBillingCycle(dates: string[]): 'monthly' | 'yearly' | 'weekly' {

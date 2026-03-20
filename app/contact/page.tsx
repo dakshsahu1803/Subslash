@@ -20,7 +20,7 @@ const fadeUp = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const },
   },
 };
 
@@ -77,7 +77,7 @@ export default function ContactPage() {
       const { supabase } = await import("@/lib/supabase");
 
       await supabase.from("feedback").insert({
-        session_id: localStorage.getItem("session_id") || "anonymous",
+        session_id: localStorage.getItem("subslash_session_id") || "anonymous",
         type: "contact",
         message: `From: ${name} (${email})\n\n${message}`,
         page: "/contact",
