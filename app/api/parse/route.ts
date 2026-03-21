@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, STORAGE_BUCKET } from '@/lib/supabase';
 import { extractTextFromPDF } from '@/lib/pdfParser';
+import { analyzeStatement } from '@/lib/analyzeStatement';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +27,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract storage path from file_url
     const url = new URL(upload.file_url);
     const pathParts = url.pathname.split(`/object/public/${STORAGE_BUCKET}/`);
     const storagePath = pathParts.length > 1
@@ -41,7 +41,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Download file from Supabase Storage
     const { data: fileData, error: downloadError } = await supabase.storage
       .from(STORAGE_BUCKET)
       .download(storagePath);
@@ -55,7 +54,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract text from PDF
     const arrayBuffer = await fileData.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const rawText = await extractTextFromPDF(buffer);
@@ -68,30 +66,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Forward extracted text to the AI analysis engine
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
-    const analyzeRes = await fetch(`${appUrl}/api/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        upload_id,
-        raw_text: rawText,
-      }),
-    });
+    const sessionId = upload.session_id || undefined;
+    const analyzeResult = await analyzeStatement(upload_id, rawText, sessionId);
 
-    if (!analyzeRes.ok) {
-      const errorBody = await analyzeRes.json().catch(() => ({}));
-      console.error('Analyze error:', errorBody);
-      await markUploadError(upload_id);
-      return NextResponse.json(
-        { error: errorBody.error || 'AI analysis failed' },
-        { status: 500 }
-      );
-    }
-
-    const analyzeResult = await analyzeRes.json();
-
-    // Mark upload as done
     await supabase
       .from('uploads')
       .update({ status: 'done' })
