@@ -41,11 +41,11 @@ export default function Navbar() {
   const [bellOpen, setBellOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentNotifications, setRecentNotifications] = useState<Notification[]>([]);
-  const [hasSession, setHasSession] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setHasSession(!!getSessionId());
+    setMounted(true);
   }, []);
 
   const fetchNotifications = useCallback(async () => {
@@ -88,12 +88,6 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
-  const visibleNavItems = hasSession
-    ? NAV_ITEMS
-    : NAV_ITEMS.filter((item) =>
-        ["/about", "/contact"].includes(item.href)
-      );
-
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-[#1a1a1a] bg-[#080808]/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -109,7 +103,7 @@ export default function Navbar() {
 
         {/* Desktop center nav */}
         <div className="hidden items-center gap-1 lg:flex">
-          {visibleNavItems.map((item) => {
+          {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
@@ -141,8 +135,8 @@ export default function Navbar() {
 
         {/* Desktop right */}
         <div className="hidden items-center gap-3 lg:flex">
-          {/* Notification bell */}
-          {hasSession && (
+          {/* Notification bell — only after mount to avoid hydration mismatch */}
+          {mounted && (
             <div ref={bellRef} className="relative">
               <button
                 type="button"
@@ -247,7 +241,7 @@ export default function Navbar() {
             >
               <div className="flex h-full flex-col p-4">
                 <div className="flex-1 space-y-1">
-                  {visibleNavItems.map((item) => {
+                  {NAV_ITEMS.map((item) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;
                     return (
