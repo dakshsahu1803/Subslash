@@ -49,12 +49,12 @@ const socials = [
     icon: GitHubIcon,
   },
   {
-    href: "https://linkedin.com/in/dakshsahu1803",
+    href: "https://www.linkedin.com/in/daksh-sahu-65828324b",
     label: "LinkedIn",
     icon: LinkedInIcon,
   },
   {
-    href: "https://instagram.com/dakshsahu1803",
+    href: "https://www.instagram.com/_daksh.xd?igsh=MWc2ajdseTA4YzViMg%3D%3D&utm_source=qr",
     label: "Instagram",
     icon: InstagramIcon,
   },
