@@ -21,8 +21,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-
-// ─── Animation Variants ─────────────────────────────────────
+// ─── Animation Variants ──────────────────────────────────
 
 import type { Variants } from "framer-motion";
 
