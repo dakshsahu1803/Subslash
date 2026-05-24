@@ -123,5 +123,4 @@ subslash/
 ```
 
 ## License
-
 MIT
