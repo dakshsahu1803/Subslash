@@ -77,7 +77,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 npm run build
 npm start
 ```
-
 ## Deploy to Vercel
 
 1. Push your code to GitHub
